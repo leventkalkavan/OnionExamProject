@@ -1,5 +1,6 @@
 using Application.Abstractions.Services;
 using Application.Abstractions.Token;
+using Application.Repositories.Choice;
 using Application.Repositories.Exam;
 using Application.Repositories.Question;
 using Application.Repositories.QuestionCategory;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence.Context;
+using Persistence.Repositories.Choice;
 using Persistence.Repositories.Exam;
 using Persistence.Repositories.Question;
 using Persistence.Repositories.QuestionCategory;
@@ -30,5 +32,6 @@ public static class ServiceRegistation
         services.AddScoped<IExamRepository, ExamRepository>();
         services.AddScoped<IQuestionCategoryRepository, QuestionCategoryRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<IChoiceRepository, ChoiceRepository>();
     }
 }
