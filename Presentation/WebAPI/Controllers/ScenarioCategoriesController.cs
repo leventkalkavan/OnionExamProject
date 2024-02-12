@@ -14,11 +14,11 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = "Admin")]
-    public class ScenarioCategoryController : ControllerBase
+    public class ScenarioCategoriesController : ControllerBase
     {
         private readonly IScenarioCategoryRepository _scenarioCategoryRepository;
 
-        public ScenarioCategoryController(IScenarioCategoryRepository scenarioCategoryRepository)
+        public ScenarioCategoriesController(IScenarioCategoryRepository scenarioCategoryRepository)
         {
             _scenarioCategoryRepository = scenarioCategoryRepository;
         }
@@ -31,7 +31,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetScenarioCategories(string id)
+        public async Task<IActionResult> GetByIdScenarioCategory(string id)
         {
             var value = await _scenarioCategoryRepository.GetByIdAsync(id);
             return Ok(value);
