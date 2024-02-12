@@ -12,6 +12,7 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    // [Authorize(AuthenticationSchemes = "Admin")]
     public class QuestionsController : ControllerBase
     {
         private readonly IQuestionRepository _questionRepository;

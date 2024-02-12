@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Application.DTOs.QuestionCategoryDtos;
 using Application.Repositories.QuestionCategory;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,7 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    // [Authorize(AuthenticationSchemes = "Admin")]
     public class QuetionCategoriesController : ControllerBase
     {
         private readonly IQuestionCategoryRepository _questionCategoryRepository;
