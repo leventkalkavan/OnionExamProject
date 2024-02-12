@@ -1,0 +1,25 @@
+using Application.Abstractions.Services;
+using Application.Abstractions.Token;
+using Application.Repositories.ScenarioCategory;
+using Domain.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Persistence.Context;
+using Persistence.Repositories.ScenarioCategory;
+using Persistence.Services;
+
+namespace Persistence;
+
+public static class ServiceRegistation
+{
+    public static void AddPersistenceServices(this IServiceCollection services)
+    {
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(Configuration.GetConnectionString));
+        services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IScenarioCategoryRepository, ScenarioCategoryRepository>();
+    }
+}
