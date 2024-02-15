@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Application.DTOs.ExamAssignment;
 using Application.Repositories.ExamAssignment;
 using Domain.Entities;
+using Domain.Entities.Identity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -16,10 +18,11 @@ namespace WebAPI.Controllers
     public class ExamAssignmentController : ControllerBase
     {
         private readonly IExamAssignmentRepository _assignmentRepository;
-
-        public ExamAssignmentController(IExamAssignmentRepository assignmentRepository)
+        private readonly UserManager<AppUser> _userManager;
+        public ExamAssignmentController(IExamAssignmentRepository assignmentRepository, UserManager<AppUser> userManager)
         {
             _assignmentRepository = assignmentRepository;
+            _userManager = userManager;
         }
         
         [HttpGet]
@@ -39,18 +42,27 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateExamAssignment(CreateExamAssignmentDto dto)
         {
-            var value = new ExamAssignment()
+            var appUser = await _userManager.FindByIdAsync(dto.UserId.ToString());
+
+            if (appUser == null)
+            {
+                return NotFound("User not found");
+            }
+            var examAssignment = new ExamAssignment()
             {
                 CreatedDate = DateTime.Now,
-                UserId = dto.UserId,
+                UserId = new Guid(appUser.Id),
                 ExamId = dto.ExamId,
                 StartTime = dto.StartTime,
-                EndTime = dto.EndTime
+                EndTime = dto.EndTime,
             };
-            await _assignmentRepository.AddAsync(value);
+
+            await _assignmentRepository.AddAsync(examAssignment);
             await _assignmentRepository.SaveAsync();
-            return Ok(value.Id);
+
+            return Ok(examAssignment.Id);
         }
+
         
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateExamAssignment(UpdateExamAssignmentDto dto)
