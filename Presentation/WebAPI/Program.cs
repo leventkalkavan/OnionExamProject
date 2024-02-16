@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Application.Abstractions.Token;
 using Domain.Entities.Identity;
 using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,43 +8,35 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Persistence;
+using TokenHandler = Infrastructure.Services.Token.TokenHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ITokenHandler, TokenHandler>();
 builder.Services.AddPersistenceServices();
-builder.Services.AddInfrastructureServices();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer("Admin", options =>
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        // token degerini kimlerin/originlerin/site kullanicilarini belirledigimiz degerdir
-        ValidateAudience = true,
-
-        // token degerini kimin dagittini ifade edecegimiz alandir
         ValidateIssuer = true,
-
-        // tokenların suresini kontol eden dogrulama
-        ValidateLifetime = true,
-
-        // token degerinin uygulamamiza ait bir deger oldugunu ifade eden security key verisinin dogrulanmasıdır 
+        ValidateAudience = true,
         ValidateIssuerSigningKey = true,
-
-        ValidAudience = builder.Configuration["Token:Audience"],
+        ValidateLifetime = true,
         ValidIssuer = builder.Configuration["Token:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Token:SecurityKey"])),
-        LifetimeValidator = (notBefore, expires, securityToken, validationParameters) =>
-            expires != null ? expires > DateTime.UtcNow : false,
-        NameClaimType = ClaimTypes.Name
+        ValidAudience = builder.Configuration["Token:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Token:SecurityKey"]!))
     };
 });
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
@@ -54,7 +47,7 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
         Description =
-            "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer accessToken\"",
+            "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGciOiJIU125InR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1Law0aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI52MzA3ZGNkLTUyZWItNDAwZi04NWJlLTI3MGIxNWUwZjRlYiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1L124kZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJhZG1pbkBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiZXhwIjoxNzA4MTcxNDUxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUwMjYiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUwMjYifQ.G0aHe5M_D7QOEYnidH-s7Cf48Ftf512sEUCyLbIN\"",
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -71,6 +64,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
@@ -80,17 +74,17 @@ using (var scope = app.Services.CreateScope())
     SeedData.Initialize(services, userManager, roleManager).Wait();
     services.GetRequiredService<ILogger<Program>>();
 }
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+app.UseCors("CorsPolicy");
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
