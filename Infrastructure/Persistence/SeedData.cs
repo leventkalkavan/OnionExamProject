@@ -11,6 +11,7 @@ public class SeedData
     {
         string adminRole = UserRole.Admin.ToString();
         string userRole = UserRole.User.ToString();
+
         foreach (var roleName in new[] { adminRole, userRole})
         {
             var roleExist = await roleManager.RoleExistsAsync(roleName);
@@ -24,7 +25,7 @@ public class SeedData
             }
         }
 
-        var adminUser = await userManager.FindByNameAsync("admin");
+        var adminUser = await userManager.FindByNameAsync("admin1");
         if (adminUser == null)
         {
             var newAdminUser = new AppUser
@@ -36,6 +37,20 @@ public class SeedData
             };
             await userManager.CreateAsync(newAdminUser, "Admin1.");
             await userManager.AddToRoleAsync(newAdminUser, adminRole);
+        }
+
+        var normalUser = await userManager.FindByNameAsync("user1");
+        if (normalUser == null)
+        {
+            var newNormalUser = new AppUser
+            {
+                UserName = "user1",
+                Email = "user@example.com",
+                PhoneNumber = "22222222",
+                Role = UserRole.User
+            };
+            await userManager.CreateAsync(newNormalUser, "User1.");
+            await userManager.AddToRoleAsync(newNormalUser, userRole);
         }
     }
 }

@@ -5,14 +5,15 @@ using System.Threading.Tasks;
 using Application.DTOs.ExamAnswerDtos;
 using Application.Repositories.ExamAnswer;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
-    // [Authorize(AuthenticationSchemes = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class ExamAnswersController : ControllerBase
     {
         private readonly IExamAnswerRepository _answerRepository;

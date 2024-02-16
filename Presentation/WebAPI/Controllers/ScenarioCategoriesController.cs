@@ -5,15 +5,16 @@ using System.Threading.Tasks;
 using Application.DTOs.ScenarioCategoryDtos;
 using Application.Repositories.ScenarioCategory;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
-    // [Authorize(AuthenticationSchemes = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class ScenarioCategoriesController : ControllerBase
     {
         private readonly IScenarioCategoryRepository _scenarioCategoryRepository;

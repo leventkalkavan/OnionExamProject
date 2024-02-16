@@ -22,27 +22,25 @@ public class TokenHandler : ITokenHandler
     public Application.DTOs.Token.Token CreateAccessToken(int second, AppUser user)
     {
         Application.DTOs.Token.Token token = new();
-
-        // security keyin simetrigini aliyoruz
-        SymmetricSecurityKey securityKey = new(Encoding.UTF8.GetBytes(_configuration["Token:SecurityKey"]));
-
-        // sifrelenmis kimligi olusturuyor
-        SigningCredentials signingCredentials = new(securityKey, SecurityAlgorithms.HmacSha256);
-
-        // olusturulacak token ayarlarini veriyoruz
         token.Expiration = DateTime.UtcNow.AddSeconds(second);
-        JwtSecurityToken securityToken = new(
-            audience: _configuration["Token:Audience"],
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Token:SecurityKey"]!));
+        var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        var userClaims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role.ToString())
+        };
+        var tokensJwtSecurityToken = new JwtSecurityToken(
             issuer: _configuration["Token:Issuer"],
-            expires: token.Expiration,
-            notBefore: DateTime.UtcNow,
-            signingCredentials: signingCredentials,
-            claims: new List<Claim> { new(ClaimTypes.Name, user.UserName) }
+            audience: _configuration["Token:Audience"],
+            claims: userClaims,
+            expires: DateTime.Now.AddDays(1),
+            signingCredentials: signingCredentials
         );
-
-        // token olusturucu siniftan bir ornek alalım.
         JwtSecurityTokenHandler tokenHandler = new();
-        token.AccessToken = tokenHandler.WriteToken(securityToken);
+        token.AccessToken = tokenHandler.WriteToken(tokensJwtSecurityToken);
 
         token.RefreshToken = CreateRefreshToken();
         return token;

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Application.Abstractions.Services;
 using Application.DTOs.Login;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -17,10 +18,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequest)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
         {
-            var accessTokenLifeTime = 3600;
-            var token = await _authService.LoginAsync(loginRequest.UserNameOrEmail, loginRequest.Password, accessTokenLifeTime);
+            var token = await _authService.LoginAsync(model.UsernameOrEmail, model.Password, 3600);
             return Ok(token);
         }
 

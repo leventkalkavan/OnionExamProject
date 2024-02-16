@@ -6,15 +6,16 @@ using Application.DTOs.ExamAssignment;
 using Application.Repositories.ExamAssignment;
 using Domain.Entities;
 using Domain.Entities.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
-    // [Authorize(AuthenticationSchemes = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class ExamAssignmentController : ControllerBase
     {
         private readonly IExamAssignmentRepository _assignmentRepository;
