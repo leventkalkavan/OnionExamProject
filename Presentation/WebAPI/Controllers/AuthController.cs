@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.Abstractions.Services;
 using Application.DTOs.Login;
+using Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -11,10 +14,14 @@ namespace WebAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IUserService _userService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, UserManager<AppUser> userManager, IUserService userService)
         {
             _authService = authService;
+            _userManager = userManager;
+            _userService = userService;
         }
 
         [HttpPost("login")]

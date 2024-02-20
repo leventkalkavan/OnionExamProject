@@ -17,9 +17,9 @@ using Persistence.Repositories.Choice;
 using Persistence.Repositories.Exam;
 using Persistence.Repositories.ExamAnswer;
 using Persistence.Repositories.ExamAssignment;
+using Persistence.Repositories.ExamScenarioCategory;
 using Persistence.Repositories.Question;
 using Persistence.Repositories.QuestionCategory;
-using Persistence.Repositories.ScenarioCategory;
 using Persistence.Services;
 
 namespace Persistence;
@@ -33,7 +33,7 @@ public static class ServiceRegistation
         services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddSignInManager().AddRoles<IdentityRole>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IScenarioCategoryRepository, ScenarioCategoryRepository>();
+        services.AddScoped<IExamScenarioCategoryRepository, ExamScenarioCategoryRepository>();
         services.AddScoped<IExamRepository, ExamRepository>();
         services.AddScoped<IQuestionCategoryRepository, QuestionCategoryRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();

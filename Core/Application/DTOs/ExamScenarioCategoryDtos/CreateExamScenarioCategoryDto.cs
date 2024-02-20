@@ -1,6 +1,6 @@
 namespace Application.DTOs.ScenarioCategoryDtos;
 
-public class CreateScenarioCategoryDto
+public class CreateExamScenarioCategoryDto
 {
     public string Name { get; set; }
 }

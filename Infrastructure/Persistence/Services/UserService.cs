@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Persistence.Services;
 
-public class UserService: IUserService
+public class UserService : IUserService
 {
     private readonly UserManager<AppUser> _userManager;
 
@@ -15,17 +15,9 @@ public class UserService: IUserService
 
     public async Task UpdateRefreshToken(string refreshToken, AppUser user, DateTime accessTokenDate,
         int refreshTokenDate)
-    {
-        var appUser = await _userManager.FindByIdAsync(user.Id);
-        if (appUser != null)
-        {
-            appUser.RefreshToken = refreshToken;
-            appUser.RefreshTokenTime = accessTokenDate.AddSeconds(refreshTokenDate);
-            await _userManager.UpdateAsync(appUser);
-        }
-        else
-        {
-            throw new Exception();
-        }
+    { 
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenTime = accessTokenDate.AddSeconds(refreshTokenDate);
+        await _userManager.UpdateAsync(user); 
     }
 }

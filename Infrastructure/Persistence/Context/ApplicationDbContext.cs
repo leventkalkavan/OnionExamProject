@@ -10,7 +10,7 @@ public class ApplicationDbContext:IdentityDbContext<AppUser>
     public ApplicationDbContext(DbContextOptions options):base(options)
     {}
     
-    public DbSet<ScenarioCategory> ScenarioCategories { get; set; }
+    public DbSet<ExamScenarioCategory> ExamScenarioCategories { get; set; }
     public DbSet<Choice> Choices { get; set; }
     public DbSet<Exam> Exams { get; set; }
     public DbSet<Question> Questions { get; set; }
@@ -23,7 +23,7 @@ public class ApplicationDbContext:IdentityDbContext<AppUser>
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Exam>()
-            .HasOne(e => e.ScenarioCategory)
+            .HasOne(e => e.ExamScenarioCategory)
             .WithMany(c => c.Exams)
             .HasForeignKey(e => e.ScenarioCategoryId)
             .OnDelete(DeleteBehavior.Restrict);

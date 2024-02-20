@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using Application.Abstractions.Services;
 using Application.Abstractions.Token;
 using Application.DTOs.Token;
@@ -7,14 +9,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Persistence.Services;
 
-public class AuthService: IAuthService
+public class AuthService : IAuthService
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly ITokenHandler _tokenHandler;
     private readonly IUserService _userService;
 
-    public AuthService(UserManager<AppUser> userManager, ITokenHandler tokenHandler, SignInManager<AppUser> signInManager, IUserService userService)
+    public AuthService(UserManager<AppUser> userManager, ITokenHandler tokenHandler,
+        SignInManager<AppUser> signInManager, IUserService userService)
     {
         _userManager = userManager;
         _tokenHandler = tokenHandler;
@@ -32,10 +35,10 @@ public class AuthService: IAuthService
             throw new Exception();
 
         SignInResult result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
-        if (result.Succeeded) //Authentication başarılı!
+        if (result.Succeeded)
         {
             Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
-            await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 15);
+            await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 60);
             return token;
         }
         throw new Exception();
