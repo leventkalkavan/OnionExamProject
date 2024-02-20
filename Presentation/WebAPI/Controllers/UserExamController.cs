@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Application.DTOs.ChoiceDtos;
+using Application.DTOs.ExamAnswerDtos;
 using Application.DTOs.ExamAssignment;
-using Application.DTOs.QuestionDtos;
-using Application.Repositories.Choice;
+using Application.Repositories.ExamAnswer;
 using Application.Repositories.ExamAssignment;
+using Application.Repositories.Question;
+using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +15,15 @@ namespace WebAPI.Controllers
     public class UserExamsController : Controller
     {
         private readonly IExamAssignmentRepository _assignmentRepository;
-        private readonly IChoiceRepository _choiceRepository;
+        private readonly IExamAnswerRepository _answerRepository;
+        private readonly IQuestionRepository _questionRepository;
 
-        public UserExamsController(IExamAssignmentRepository assignmentRepository, IChoiceRepository choiceRepository)
+        public UserExamsController(IExamAssignmentRepository assignmentRepository,
+            IExamAnswerRepository answerRepository, IQuestionRepository questionRepository)
         {
             _assignmentRepository = assignmentRepository;
-            _choiceRepository = choiceRepository;
+            _answerRepository = answerRepository;
+            _questionRepository = questionRepository;
         }
 
         [HttpGet("assigned-exams")]
@@ -45,82 +45,79 @@ namespace WebAPI.Controllers
             return Ok(assignedExams);
         }
 
-        [HttpGet("user-assigned-questions")]
-        public async Task<IActionResult> GetUserAssignedQuestions()
+        [HttpPost("assigned-exams/{examId}/answer")]
+        public async Task<IActionResult> PostAnswerForAssignedExam(Guid examId, [FromBody] SubmitAnswerDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                return BadRequest("User ID not found in claims.");
-            }
-
-            var assignedExams = await _assignmentRepository
+            var assignment = await _assignmentRepository
                 .GetAll()
-                .Include(a => a.Exam)
-                .ThenInclude(e => e.QuestionCategories)
-                .ThenInclude(qc => qc.Questions)
-                .ThenInclude(q => q.Choices)
-                .Where(a => a.UserId.ToString() == userId)
-                .ToListAsync();
+                .FirstOrDefaultAsync(a => a.UserId.ToString() == userId && a.ExamId == examId);
 
-            if (assignedExams == null || !assignedExams.Any())
+            if (assignment == null)
             {
-                return NotFound("No assigned exams found for the user.");
+                return BadRequest("An exam assigned to the user and not completed was not found.");
             }
 
-            var questionDtos = assignedExams
-                .SelectMany(a => a.Exam.QuestionCategories)
-                .SelectMany(qc => qc.Questions)
-                .Select(q => new ResultQuestionDto()
-                {
-                    QuestionId = q.Id,
-                    Description = q.Description,
-                    Choices = q.Choices.Select(c => new ResultChoiceDto()
-                    {
-                        ChoiceId = c.Id.ToString(),
-                        ChoiceText = c.Text,
-                        ChoiceType = c.ChoiceType
-                    }).ToList()
-                })
-                .ToList();
+            var question = await _questionRepository.GetByIdAsync(dto.QuestionId.ToString());
 
-            return Ok(questionDtos);
-        }
-
-        [HttpGet("choice-by-id/{choiceId}")]
-        public async Task<IActionResult> GetChoiceById(string choiceId)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
+            if (question == null)
             {
-                return BadRequest("User ID not found in claims.");
+                return BadRequest("The specified question was not found.");
             }
 
-            var assignedChoice = await _assignmentRepository
-                .GetAll()
-                .Include(a => a.Exam)
-                .ThenInclude(e => e.QuestionCategories)
-                .ThenInclude(qc => qc.Questions)
-                .ThenInclude(q => q.Choices)
-                .Where(a => a.UserId.ToString() == userId)
-                .SelectMany(a => a.Exam.QuestionCategories.SelectMany(qc => qc.Questions.SelectMany(q => q.Choices)))
-                .FirstOrDefaultAsync(c => c.Id.ToString() == choiceId);
+            var userAnswerIsCorrect = question.IsCorrect == (dto.UserAnswer);
 
-            if (assignedChoice == null)
+            var examAnswer = new ExamAnswer
             {
-                return NotFound("Choice not found.");
-            }
-
-            var choiceDto = new ResultChoiceDto
-            {
-                ChoiceId = assignedChoice.Id.ToString(),
-                ChoiceText = assignedChoice.Text,
-                ChoiceType = assignedChoice.ChoiceType
+                UserId = Guid.Parse(userId),
+                ExamAssignmentId = assignment.Id,
+                QuestionId = dto.QuestionId,
+                UserAnswer = dto.UserAnswer,
+                Score = userAnswerIsCorrect ? 1 : 0,
+                AnsweredAt = DateTime.UtcNow
             };
 
-            return Ok(choiceDto);
+            await _answerRepository.AddAsync(examAnswer);
+            await _answerRepository.SaveAsync();
+
+            return Ok("The exam answer was successfully recorded.");
         }
+        [HttpGet("assigned-exams/{examId}/user-score")]
+        public async Task<IActionResult> GetUserScoreForAssignedExam(Guid examId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                var userAnswers = await _answerRepository
+                    .GetAll()
+                    .Where(ea => ea.UserId.ToString() == userId && ea.ExamAssignment.ExamId == examId)
+                    .ToListAsync();
+                var examQuestions = await _questionRepository
+                    .GetAll()
+                    .Where(q => q.QuestionCategory.ExamId == examId)
+                    .ToListAsync();
+
+                var correctAnswers = 0;
+                foreach (var question in examQuestions)
+                {
+                    var userAnswer = userAnswers.FirstOrDefault(ea => ea.QuestionId == question.Id);
+
+                    if (userAnswer != null && question.IsCorrect == userAnswer.UserAnswer)
+                    {
+                        correctAnswers++;
+                    }
+                }
+                int totalScore = correctAnswers == examQuestions.Count ? 100 : correctAnswers * 50;
+
+                return Ok(new { TotalScore = totalScore });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
     }
 }

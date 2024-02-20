@@ -7,5 +7,5 @@ public class UpdateExamDto
     public int ExamMinute { get; set; }
     public string Description { get; set; }
     public int SuccessScore { get; set; }
-    public Guid ScenarioCategoryId { get; set; }
+    public Guid ExamScenarioCategoryId { get; set; }
 }

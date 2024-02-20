@@ -13,7 +13,7 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize(AuthenticationSchemes = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class QuetionCategoriesController : ControllerBase
     {
         private readonly IQuestionCategoryRepository _questionCategoryRepository;

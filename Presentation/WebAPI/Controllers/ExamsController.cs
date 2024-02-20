@@ -47,7 +47,7 @@ namespace WebAPI.Controllers
                 ExamMinute = dto.ExamMinute,
                 Description = dto.Description,
                 SuccessScore = dto.SuccessScore,
-                ScenarioCategoryId = dto.ScenarioCategoryId
+                ExamScenarioCategoryId = dto.ExamScenarioCategoryId
             };
             await _examRepository.AddAsync(value);
             await _examRepository.SaveAsync();
@@ -62,7 +62,7 @@ namespace WebAPI.Controllers
             value.ExamMinute = dto.ExamMinute;
             value.Description = dto.Description;
             value.SuccessScore = dto.SuccessScore;
-            value.ScenarioCategoryId = dto.ScenarioCategoryId;
+            value.ExamScenarioCategoryId = dto.ExamScenarioCategoryId;
             value.UpdatedDate = DateTime.Now;
             _examRepository.Update(value);
             await _examRepository.SaveAsync();

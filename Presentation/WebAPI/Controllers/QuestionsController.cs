@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Application.DTOs.QuestionDtos;
 using Application.Repositories.Question;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,7 +13,7 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize(AuthenticationSchemes = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class QuestionsController : ControllerBase
     {
         private readonly IQuestionRepository _questionRepository;
@@ -28,32 +29,34 @@ namespace WebAPI.Controllers
             var value = _questionRepository.GetAll();
             return Ok(value);
         }
-        
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdQuestion(string id)
         {
             var value = await _questionRepository.GetByIdAsync(id);
             return Ok(value);
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> CreateQuestion(CreateQuestionDto dto)
         {
             var value = new Question()
             {
+                QuestionCategoryId = dto.QuestionCategoryId,
                 CreatedDate = DateTime.Now,
                 Description = dto.Description,
-                QuestionCategoryId = dto.QuestionCategoryId
+                IsCorrect = dto.IsCorrect
             };
             await _questionRepository.AddAsync(value);
             await _questionRepository.SaveAsync();
             return Ok(value.Id);
         }
-        
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateQuestion(UpdateQuestionDto dto)
         {
             var value = await _questionRepository.GetByIdAsync(dto.Id);
+            value.IsCorrect = dto.IsCorrect;
             value.Description = dto.Description;
             value.QuestionCategoryId = dto.QuestionCategoryId;
             value.UpdatedDate = DateTime.Now;

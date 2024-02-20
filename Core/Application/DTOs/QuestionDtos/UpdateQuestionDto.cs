@@ -5,4 +5,5 @@ public class UpdateQuestionDto
     public string Id { get; set; }
     public string Description { get; set; }
     public Guid QuestionCategoryId { get; set; }
+    public bool IsCorrect { get; set; }
 }

@@ -49,6 +49,7 @@ namespace WebAPI.Controllers
             {
                 return NotFound("User not found");
             }
+
             var examAssignment = new ExamAssignment()
             {
                 CreatedDate = DateTime.Now,
@@ -63,6 +64,7 @@ namespace WebAPI.Controllers
 
             return Ok(examAssignment.Id);
         }
+
 
         
         [HttpPut("{id}")]
