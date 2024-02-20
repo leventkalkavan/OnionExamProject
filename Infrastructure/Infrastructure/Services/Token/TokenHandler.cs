@@ -4,18 +4,22 @@ using System.Security.Cryptography;
 using System.Text;
 using Application.Abstractions.Token;
 using Domain.Entities.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Persistence.Context;
 
 namespace Infrastructure.Services.Token;
 
 public class TokenHandler : ITokenHandler
 {
     private readonly IConfiguration _configuration;
+    private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions;
 
-    public TokenHandler(IConfiguration configuration)
+    public TokenHandler(IConfiguration configuration, DbContextOptions<ApplicationDbContext> dbContextOptions)
     {
         _configuration = configuration;
+        _dbContextOptions = dbContextOptions;
     }
 
 
@@ -52,5 +56,17 @@ public class TokenHandler : ITokenHandler
         using var random = RandomNumberGenerator.Create();
         random.GetBytes(number);
         return Convert.ToBase64String(number);
+    }
+
+    public void RevokeRefreshToken(string token, AppUser user)
+    {
+        user.RefreshToken = null;
+        user.RefreshTokenTime = null;
+
+        using (var dbContext = new ApplicationDbContext(_dbContextOptions))
+        {
+            dbContext.Entry(user).State = EntityState.Modified;
+            dbContext.SaveChanges();
+        }
     }
 }

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Application.Abstractions.Services;
 using Application.DTOs.Login;
 using Domain.Entities.Identity;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,13 +16,16 @@ namespace WebAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
         private readonly IUserService _userService;
 
-        public AuthController(IAuthService authService, UserManager<AppUser> userManager, IUserService userService)
+        public AuthController(IAuthService authService, UserManager<AppUser> userManager, IUserService userService,
+            SignInManager<AppUser> signInManager)
         {
             _authService = authService;
             _userManager = userManager;
             _userService = userService;
+            _signInManager = signInManager;
         }
 
         [HttpPost("login")]
@@ -36,6 +40,28 @@ namespace WebAPI.Controllers
         {
             var token = await _authService.RefreshTokenLoginAsync(refreshToken);
             return Ok(token);
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user != null)
+            {
+                user.RefreshToken = null;
+                user.RefreshTokenTime = null;
+
+                await _userManager.UpdateSecurityStampAsync(user);
+                await _userManager.UpdateAsync(user);
+                await _signInManager.RefreshSignInAsync(user);
+            }
+
+            return Ok("logout successfully.");
         }
     }
 }
